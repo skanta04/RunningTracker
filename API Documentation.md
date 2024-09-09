@@ -177,7 +177,7 @@ Description: Calcuates the average workout duration across all workouts.
 ```
 - 401 Bad Request (Error)
 ```json
-}
+{
   "success": false,
   "message": "Error calculating average duration",
   "details": "Some error message"
