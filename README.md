@@ -5,7 +5,7 @@ This API allows users to:
 - Perform aggregations on workout data, such as total distance per week/month or average duration
 
 ## Design Decisions
-- Simple and Intuitive API Design: This follows RESTful principles for an intuitive and easily consumable API. MOreover, the naming conventions of each API and show accurate describe what the API will do
+- Simple and Intuitive API Design: This follows RESTful principles for an intuitive and easily consumable API. Moreover, the naming conventions of each API and show accurate describe what the API will do
 - Flexible Querying:  The API supports optional filtering parameters (date, startDate, endDate, typeOfRun) that make it intuitive for users to retrieve data without complex logic.
 - Validation and Error Handling: I ensured that there was input validation (especially on the date format) and uniform error messages to improve the simplicity of understanding error or success messages, and overall improve the user experience
   
