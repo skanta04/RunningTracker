@@ -122,7 +122,7 @@ GET /workouts?typeOfRun=long run&startDate=2024-06-01&endDate=2024-09-8
 ```
 
 ## 3. Get Total Distance Per Week (Endpoint: ```GET /workouts/distance-per-week```)
-Description: Aggreagetes the total distance of workouts per week
+Description: Aggregates the total distance of workouts per week
 ### Response:
 - 200 OK (Success)
 ```json
@@ -160,7 +160,7 @@ Description: Aggreagetes the total distance of workouts per week
   "details": "Some error message"
 }
 ```
-## 4. Get Average Workout Duration (Endpoint: ```GET /workouts/average-duration)
+## 4. Get Average Workout Duration (Endpoint: ```GET /workouts/average-duration```)
 Description: Calcuates the average workout duration across all workouts.
 ### Response:
 - 200 OK (Success)
