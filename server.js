@@ -32,59 +32,37 @@ app.get('/', (req, res) => {
 // Creates a new workout
 app.post('/workouts', async (req, res) => {
     try {
-        const workouts = req.body;
-        if (Array.isArray(workouts)) {
-            // lets me insert multiple workouts at once
-            workouts.forEach((workout) => {
-                if (!workout.date || !isValidDate(workout.date)) {
-                    throw new Error('Invalid date format. Expected YYYY-MM-DD.');
-                }
-                workout.date = new Date(workout.date).toISOString();
-            });
-
-            const newWorkouts = await Workout.insertMany(workouts)
-            res.status(201).json({
-                success: true,
-                data: newWorkouts,
-                message: 'Workouts created successfully'
-            });
-        } else {
-            // or if we want to only insert one workout
-            const {name, date, duration, distance, heartRate, typeOfRun, shoeType} = workouts;
-
+        let workouts = Array.isArray(req.body) ? req.body : [req.body];
+        
+        workouts = workouts.map((workout) => {
+            const { name, date, duration, distance, heartRate, typeOfRun, shoeType } = workout;
             if (!date || !isValidDate(date)) {
-                return res.status(400).json({ 
-                    success: false,
-                    error: 'Invalid date format. Expected YYYY-MM-DD.' 
-                });
+                throw new Error('Invalid date format. Expected YYYY-MM-DD.');
             }
-            const formattedDate = new Date(date).toISOString(); // Converts regular date to date and time (YYYY-MM-DDT00:00:00Z)
-
-            const newWorkout = new Workout({
+            return {
                 name,
-                date: formattedDate, 
+                date: new Date(date).toISOString(),  // Convert date to ISO format
                 duration, 
                 distance, 
                 heartRate, 
                 typeOfRun, 
-                shoeType: shoeType || null, 
-              });
-            
-            await newWorkout.save();
-            res.status(201).json({
-                success: true,
-                data: newWorkout,
-                message: 'Workout created successfully'
-            });
-        }
+                shoeType: shoeType || null,
+            };
+        });
+        const newWorkouts = await Workout.insertMany(workouts);
+        res.status(201).json({
+            success: true,
+            data: newWorkouts,
+            message: 'Workouts created successfully',
+        });
     } catch (error) {
-      res.status(400).json({ 
-        success: false,
-        error: 'Error creating workout', 
-        details: error.message 
-    });
+        res.status(400).json({ 
+            success: false,
+            error: 'Error creating workout',
+            details: error.message 
+        });
     }
-  });
+}); 
 
 // Function to check valid date format (YYYY-MM-DD)
 function isValidDate(dateString) {
