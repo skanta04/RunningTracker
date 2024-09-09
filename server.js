@@ -18,91 +18,191 @@ mongoose.connection.once('open', function() {
     console.log('Connection Error', error)
 });
 
-// Root route for the base URL
+
+
+
+// base URL route
 app.get('/', (req, res) => {
-    res.send('SERVER WORKS AYAYAYAYAYAY!');
+    res.send('SERVER WORKS YAYAYAYAYAY!');
   });
+
+
+
 
 // Creates a new workout
 app.post('/workouts', async (req, res) => {
     try {
-      const {date, duration, distance, heartRate, typeOfRun, shoeType, name} = req.body;
-      // Create a new workout document
-    const newWorkout = new Workout({
-        date, 
-        duration, 
-        distance, 
-        heartRate, 
-        typeOfRun, 
-        shoeType: shoeType || null, 
-        name, 
-      });
+        const workouts = req.body;
+        if (Array.isArray(workouts)) {
+            // lets me insert multiple workouts at once
+            workouts.forEach((workout) => {
+                if (!workout.date || !isValidDate(workout.date)) {
+                    throw new Error('Invalid date format. Expected YYYY-MM-DD.');
+                }
+                workout.date = new Date(workout.date).toISOString();
+            });
 
-      // save workout to database
-      await newWorkout.save();
-      res.status(201).json(newWorkout);
-    } 
-    catch (error) {
-      res.status(400).json({ message: 'Error creating workout', error });
+            const newWorkouts = await Workout.insertMany(workouts)
+            res.status(201).json({
+                success: true,
+                data: newWorkouts,
+                message: 'Workouts created successfully'
+            });
+        } else {
+            // or if we want to only insert one workout
+            const {name, date, duration, distance, heartRate, typeOfRun, shoeType} = workouts;
+
+            if (!date || !isValidDate(date)) {
+                return res.status(400).json({ 
+                    success: false,
+                    error: 'Invalid date format. Expected YYYY-MM-DD.' 
+                });
+            }
+            const formattedDate = new Date(date).toISOString(); // Converts regular date to date and time (YYYY-MM-DDT00:00:00Z)
+
+            const newWorkout = new Workout({
+                name,
+                date: formattedDate, 
+                duration, 
+                distance, 
+                heartRate, 
+                typeOfRun, 
+                shoeType: shoeType || null, 
+              });
+            
+            await newWorkout.save();
+            res.status(201).json({
+                success: true,
+                data: newWorkout,
+                message: 'Workout created successfully'
+            });
+        }
+    } catch (error) {
+      res.status(400).json({ 
+        success: false,
+        error: 'Error creating workout', 
+        details: error.message 
+    });
     }
   });
+
+// Function to check valid date format (YYYY-MM-DD)
+function isValidDate(dateString) {
+    const regex = /^\d{4}-\d{2}-\d{2}$/;
+    return regex.test(dateString);
+}
+
+
+
 
 // Retrieve workouts with optional filters
 app.get('/workouts', async (req, res) => {
-    const { date, routeNickname, typeOfRun } = req.query;
+    const { startDate, endDate, date, typeOfRun } = req.query;
   
     let filter = {};
-    if (date) filter.date = { $gte: new Date(date) };
-    if (routeNickname) filter.routeNickname = routeNickname;
-    if (typeOfRun) filter.typeOfRun = typeOfRun; 
+    if (date) {
+        if (date && !isValidDate(date)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid date format. Expected YYYY-MM-DD.'
+            })
+        }
+        filter.date = new Date(date);
+    } else if (startDate && endDate) {
+        if ((startDate && !isValidDate(startDate) || endDate && !isValidDate(endDate))) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid startDate or endDate format. Expected YYYY-MM-DD.'
+            })
+        }
+        filter.date = {$gte: new Date(startDate), $lte: new Date(endDate)};
+    }
+    if (typeOfRun) filter.typeOfRun = typeOfRun
+    
   
     try {
-      const workouts = await Workout.find(filter);
-      res.status(200).json(workouts);
+        const workouts = await Workout.find(filter);
+        res.status(200).json({
+            success: true,
+            data: workouts,
+        });
     } catch (error) {
-      res.status(400).json({ message: 'Error retrieving workouts', error });
+        res.status(400).json({ 
+            success: false,
+            error: 'Error retrieving workouts',
+            details: error.message
+        });
     }
-  });
+});
+
+
+
 
 app.get('/workouts/distance-per-week', async (req, res) => {
     try {
         // aggregate is MongoDB aggregation pipeline that allows us to process stuff from database
-      const totalDistancePerWeek = await Workout.aggregate([
-        {
-            // groups are categroized with id week number and then the total distance for that week
-          $group: {
-            _id: { $week: "$date" },
-            totalDistance: { $sum: "$distance" }
-          }
-        },
-        {
-            // sorts in ascending order
-          $sort: { _id: 1 }
-        }
-      ]);
-      res.status(200).json(totalDistancePerWeek);
+        const totalDistancePerWeek = await Workout.aggregate([
+            {
+                // groups are categroized with id week number and then the total distance for that week
+                $group: {
+                    _id: { $week: "$date" },
+                    totalDistance: { $sum: "$distance" }
+                }
+            },
+            {
+                // sorts in ascending order
+                $sort: { _id: 1 }
+            }
+        ]);
+
+        const formattedData = totalDistancePerWeek.map(item => ({
+            week: item._id,
+            totalDistance: item.totalDistance
+        }));
+
+        res.status(200).json({
+            success: true,
+            data: formattedData
+        });
+
     } catch (error) {
-      res.status(400).json({ message: 'Error aggregating total distance per week', error });
-    }
-  });
+        res.status(400).json({ 
+            success: false,
+            message: 'Error aggregating total distance per week', 
+            details: error.message });
+        }
+});
+
+
+
 
 // average run duration in total
 app.get('/workouts/average-duration', async (req, res) => {
     try {
-      const averageDuration = await Workout.aggregate([
-        {
-            // no id for group because there is only one average duration
-          $group: {
-            _id: null,
-            avgDuration: { $avg: "$duration" }
-          }
-        }
-      ]);
-      res.status(200).json(averageDuration);
+        const averageDuration = await Workout.aggregate([
+            {
+                // no id for group because there is only one average duration
+                $group: {
+                    _id: null,
+                    avgDuration: { $avg: "$duration" }
+                }
+            }
+        ]);
+        res.status(200).json({
+            success: true,
+            data: averageDuration
+        });
     } catch (error) {
-      res.status(400).json({ message: 'Error calculating average duration', error });
+        res.status(400).json({ 
+            success: false,
+            message: 'Error calculating average duration', 
+            details: error.message 
+        });
     }
   });
+
+
+
 
 app.get('/workouts/distance-per-month', async (req, res) => {
     try {
@@ -119,11 +219,24 @@ app.get('/workouts/distance-per-month', async (req, res) => {
           $sort: { _id: 1 }
         }
       ]);
-      res.status(200).json(totalDistancePerMonth);
+
+    const formattedData = totalDistancePerMonth.map(item => ({
+        month: item._id,
+        totalDistance: item.totalDistance
+    }));
+
+    res.status(200).json({
+        success: true,
+        data: formattedData,
+    });
     } catch (error) {
-      res.status(400).json({ message: 'Error aggregating total distance per month', error });
+        res.status(400).json({ 
+            success: false,
+            message: 'Error aggregating total distance per month', 
+            details: error.message 
+        });
     }
-  });
+});
   
 
 app.listen(PORT, () => {
