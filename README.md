@@ -12,5 +12,5 @@ This API allows users to:
 ## Tech Stack
 - NodeJS/Express: Used to build the RESTful API's
 - MongoDB: the NoSQL database that stores the workout data
-- Mongoose: the object data manager (ODM) for MongoDB that models teh workout data schema and perform the CRUD (create, read, update, delete) operations
+- Mongoose: the object data manager (ODM) for MongoDB that models the workout data schema and perform the CRUD (create, read, update, delete) operations
   
