@@ -183,7 +183,7 @@ Description: Calcuates the average workout duration across all workouts.
   "details": "Some error message"
 }
 ```
-## 5. Get Total Distance Per Month (Endpoint: ```GET /workouts/distance-per-month)
+## 5. Get Total Distance Per Month (Endpoint: ```GET /workouts/distance-per-month```)
 Descirption: Aggregates the total distance covered through workouts per month
 ### Response:
 - 200 OK (Success)
