@@ -32,8 +32,8 @@ app.get('/', (req, res) => {
 // Creates a new workout
 app.post('/workouts', async (req, res) => {
     try {
-        let workouts = Array.isArray(req.body) ? req.body : [req.body];
-        
+        let workouts = Array.isArray(req.body) ? req.body : [req.body]; // ensures workouts is always array even if one component
+
         workouts = workouts.map((workout) => {
             const { name, date, duration, distance, heartRate, typeOfRun, shoeType } = workout;
             if (!date || !isValidDate(date)) {
