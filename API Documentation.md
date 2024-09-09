@@ -4,7 +4,7 @@
 
 Description: This endpoint allows users to create a single workout or multiple workouts
 ### Request Body:
-- If creating one workout:
+- Create one workout:
 ```json
 {
     "name": "Afternoon Workout",
@@ -16,7 +16,7 @@ Description: This endpoint allows users to create a single workout or multiple w
     "shoeType": "Brooks Ghost"
 }
 ```
-- If creating multiples workouts (send an array):
+- Or multiple workouts at once:
 ```json
 [{
     "name": "Afternoon Workout",
